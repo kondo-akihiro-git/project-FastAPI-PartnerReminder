@@ -1,0 +1,6 @@
+# デート情報の取得
+GET http://localhost:8000/meetings HTTP/1.1
+
+
+# デート詳細の取得
+GET http://localhost:8000/meetings/1 HTTP/1.1
