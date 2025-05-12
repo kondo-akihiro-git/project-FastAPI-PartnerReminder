@@ -13,11 +13,12 @@ def get_meeting_details(meeting_id):
     conn = get_connection()
     cur = conn.cursor()
 
-    # メインのデート情報
+    # メインのデート情報と外見画像パスを取得
     cur.execute("""
-        SELECT id, title, location, date, my_appearance_image_path 
-        FROM meetings 
-        WHERE id = %s
+        SELECT m.id, m.title, m.location, m.date, ma.image_path 
+        FROM meetings m
+        LEFT JOIN myappearances ma ON ma.meeting_id = m.id
+        WHERE m.id = %s
     """, (meeting_id,))
     meeting = cur.fetchone()
 
@@ -103,6 +104,16 @@ def update_meeting_data(meeting_id: int, data: dict):
         SET todo = %s
         WHERE meeting_id = %s
     """, (data["todo_for_next"], meeting_id))
+
+    # 画像パスの更新（もし提供されていれば）
+    if "my_appearance_image_path" in data:
+        # MyAppearancesテーブルに画像パスを更新（または新規挿入）
+        cur.execute("""
+            INSERT INTO myappearances (meeting_id, image_path)
+            VALUES (%s, %s)
+            ON CONFLICT (meeting_id) 
+            DO UPDATE SET image_path = EXCLUDED.image_path
+        """, (meeting_id, data["my_appearance_image_path"]))
 
     conn.commit()
     cur.close()

@@ -1,14 +1,22 @@
+-- 既存データ削除（子テーブルから削除）
+DELETE FROM TodoForNext;
+DELETE FROM PartnerGoodPoints;
+DELETE FROM TalkedTopics;
+DELETE FROM PartnerAppearances;
+DELETE FROM EventNames;
+DELETE FROM Meetings;
+
 -- Meetings テーブル
 INSERT INTO Meetings (title, location, date, my_appearance_image_path) VALUES
-('水族館デート', '品川水族館', '2024-04-15', 'images/self1.jpg'),
+('水族館デート', '品川水族館', '2024-04-15', '/uploaded_images/self1.jpg'),
 ('カフェでまったり', '代官山カフェ', '2024-04-22', NULL),
-('映画とディナー', '渋谷', '2024-04-29', 'images/self2.jpg'),
-(NULL, '新宿御苑', '2024-05-01', NULL),
-('ドライブデート', '箱根', '2024-05-04', 'images/self3.jpg'),
+('映画とディナー', '渋谷', '2024-04-29', '/uploaded_images/self2.jpg'),
+(NULL, '新宿御苑', '2024-05-01', '/uploaded_images/self3.jpg'),
+('ドライブデート', '箱根', '2024-05-04', '/uploaded_images/self3.jpg'),
 ('ランチと公園', '代々木公園', '2024-05-07', NULL),
-(NULL, '浅草寺', '2024-05-09', 'images/self4.jpg'),
+(NULL, '浅草寺', '2024-05-09', '/uploaded_images/self4.jpg'),
 ('博物館めぐり', '上野', '2024-05-12', NULL),
-('夜景とディナー', 'お台場', '2024-05-15', 'images/self5.jpg'),
+('夜景とディナー', 'お台場', '2024-05-15', '/uploaded_images/self5.jpg'),
 ('美術館と読書の話', '六本木', '2024-05-18', NULL);
 
 -- EventNames（改行込み）
