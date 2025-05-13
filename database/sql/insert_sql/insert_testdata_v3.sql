@@ -35,7 +35,7 @@ INSERT INTO MyAppearances (meeting_id, image_path) VALUES
 
 -- EventNames
 INSERT INTO EventNames (meeting_id, event_name) VALUES
-(1, '水族館\nランチ'),
+(1, E'水族館\nランチ'),
 (2, 'カフェ'),
 (3, '映画鑑賞\nイタリアンディナー'),
 (5, 'ドライブ\nランチ'),

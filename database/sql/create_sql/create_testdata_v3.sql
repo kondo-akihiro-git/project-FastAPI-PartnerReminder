@@ -14,7 +14,7 @@ DROP TABLE IF EXISTS MyAppearances;
 CREATE TABLE MyAppearances (
     id SERIAL PRIMARY KEY,
     meeting_id INTEGER UNIQUE REFERENCES Meetings(id) ON DELETE CASCADE,
-    image_path TEXT NOT NULL
+    image_path TEXT
 );
 
 -- 以下、他のテーブルは変更なし
