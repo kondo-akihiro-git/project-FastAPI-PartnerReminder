@@ -177,3 +177,25 @@ def create_meeting_data(data: dict):
     finally:
         cur.close()
         conn.close()
+
+def delete_meetings_by_ids(ids: list[int]) -> int:
+    if not ids:
+        return 0
+
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        # SQL IN 句で一括削除
+        query = "DELETE FROM meetings WHERE id = ANY(%s);"
+        cur.execute(query, (ids,))
+        deleted_count = cur.rowcount
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"削除中にエラーが発生しました: {e}")
+        deleted_count = 0
+    finally:
+        cur.close()
+        conn.close()
+
+    return deleted_count

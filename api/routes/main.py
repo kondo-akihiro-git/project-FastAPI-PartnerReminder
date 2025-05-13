@@ -1,6 +1,8 @@
 # api/main.py
+from typing import List
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from api.models.meeting import Meeting
 from database.operation import get_meetings,get_meeting_details
 from database.operation import update_meeting_data
@@ -9,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Body
 import shutil
 import os
+from database.operation import delete_meetings_by_ids
 
 app = FastAPI()
 
@@ -59,3 +62,13 @@ def create_meeting(new_data: dict = Body(...)):
     if new_id is None:
         raise HTTPException(status_code=400, detail="デート情報の登録に失敗しました。")
     return {"message": "登録に成功しました", "meeting_id": new_id}
+
+class DeleteRequest(BaseModel):
+    ids: List[int]
+
+@app.post("/meetings/delete")
+def delete_meetings(request: DeleteRequest):
+    deleted_count = delete_meetings_by_ids(request.ids)
+    if deleted_count == 0:
+        raise HTTPException(status_code=404, detail="削除対象のデートが見つかりませんでした。")
+    return {"message": f"{deleted_count} 件のデート情報を削除しました。"}
