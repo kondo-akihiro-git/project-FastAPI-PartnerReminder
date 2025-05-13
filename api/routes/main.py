@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from api.models.meeting import Meeting
 from database.operation import get_meetings,get_meeting_details
 from database.operation import update_meeting_data
+from database.operation import create_meeting_data
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Body
 import shutil
@@ -51,3 +52,10 @@ def upload_image(file: UploadFile = File(...)):
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     return {"filename": f"{UPLOAD_DIR}/{file.filename}"}
+
+@app.post("/meetings")
+def create_meeting(new_data: dict = Body(...)):
+    new_id = create_meeting_data(new_data)
+    if new_id is None:
+        raise HTTPException(status_code=400, detail="デート情報の登録に失敗しました。")
+    return {"message": "登録に成功しました", "meeting_id": new_id}
