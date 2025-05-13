@@ -17,7 +17,7 @@ Content-Type: application/json
   "partner_appearances": "白ワンピース\nロングヘア",
   "talked_topics": "映画の話\n趣味の話",
   "partner_good_points": "笑顔が素敵\n丁寧な話し方",
-  "todo_for_next": "次のデート場所を探す\nLINEを送る"
+  "todo_for_next": "次のデート場所を探す\nLINEを送る",
 }
 
 ### デート情報の新規登録
@@ -33,5 +33,4 @@ Content-Type: application/json
   "talked_topics": "旅行の話\n仕事の話",
   "partner_good_points": "話し方が丁寧\n姿勢が良い",
   "todo_for_next": "次は美術館に行く\nお土産を買う",
-  "my_appearance_image_path": "self_uploaded.jpg"
 }
