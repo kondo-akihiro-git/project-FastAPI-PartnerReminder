@@ -4,7 +4,7 @@
 DROP TABLE IF EXISTS Meetings CASCADE;
 CREATE TABLE Meetings (
     id SERIAL PRIMARY KEY,
-    title TEXT, -- 任意：デートに名前を付けたい場合
+    title TEXT NOT NULL, -- 任意：デートに名前を付けたい場合
     location TEXT NOT NULL,
     date DATE NOT NULL
 );
@@ -14,7 +14,7 @@ DROP TABLE IF EXISTS MyAppearances;
 CREATE TABLE MyAppearances (
     id SERIAL PRIMARY KEY,
     meeting_id INTEGER UNIQUE REFERENCES Meetings(id) ON DELETE CASCADE,
-    image_path TEXT NOT NULL
+    image_path TEXT
 );
 
 -- 以下、他のテーブルは変更なし

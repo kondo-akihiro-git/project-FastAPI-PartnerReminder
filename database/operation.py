@@ -119,3 +119,111 @@ def update_meeting_data(meeting_id: int, data: dict):
     cur.close()
     conn.close()
     return True
+
+def create_meeting_data(data: dict):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+        # メインテーブルに挿入
+        cur.execute("""
+            INSERT INTO meetings (title, location, date)
+            VALUES (%s, %s, %s)
+            RETURNING id
+        """, (data["title"], data["location"], data["date"]))
+        meeting_id = cur.fetchone()[0]
+
+        # サブ情報の挿入（各テーブルに対応）
+        cur.execute("""
+            INSERT INTO eventnames (meeting_id, event_name)
+            VALUES (%s, %s)
+        """, (meeting_id, data.get("event_names", "")))
+
+        cur.execute("""
+            INSERT INTO partnerappearances (meeting_id, appearance)
+            VALUES (%s, %s)
+        """, (meeting_id, data.get("partner_appearances", "")))
+
+        cur.execute("""
+            INSERT INTO talkedtopics (meeting_id, topic)
+            VALUES (%s, %s)
+        """, (meeting_id, data.get("talked_topics", "")))
+
+        cur.execute("""
+            INSERT INTO partnergoodpoints (meeting_id, good_point)
+            VALUES (%s, %s)
+        """, (meeting_id, data.get("partner_good_points", "")))
+
+        cur.execute("""
+            INSERT INTO todofornext (meeting_id, todo)
+            VALUES (%s, %s)
+        """, (meeting_id, data.get("todo_for_next", "")))
+
+        # 画像パス（任意）
+        if "my_appearance_image_path" in data:
+            cur.execute("""
+                INSERT INTO myappearances (meeting_id, image_path)
+                VALUES (%s, %s)
+            """, (meeting_id, data["my_appearance_image_path"]))
+
+        conn.commit()
+        return meeting_id
+
+    except Exception as e:
+        print("DB Insert Error:", e)
+        conn.rollback()
+        return None
+
+    finally:
+        cur.close()
+        conn.close()
+
+def delete_meetings_by_ids(ids: list[int]) -> int:
+    if not ids:
+        return 0
+
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        # SQL IN 句で一括削除
+        query = "DELETE FROM meetings WHERE id = ANY(%s);"
+        cur.execute(query, (ids,))
+        deleted_count = cur.rowcount
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"削除中にエラーが発生しました: {e}")
+        deleted_count = 0
+    finally:
+        cur.close()
+        conn.close()
+
+    return deleted_count
+
+
+def get_all_good_points():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT gp.id, gp.meeting_id, gp.good_point, m.location, m.date
+        FROM partnergoodpoints gp
+        JOIN meetings m ON gp.meeting_id = m.id
+        ORDER BY gp.id ASC
+    """)
+
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    result = []
+    for row in rows:
+        result.append({
+            "id": row[0],
+            "meeting_id": row[1],
+            "good_point": row[2],
+            "location": row[3],
+            "date": row[4].isoformat(),
+        })
+
+    return {"goodpoints": result}
