@@ -3,41 +3,45 @@ from database.connection import get_connection
 def get_meetings():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM meetings")
+    cur.execute("""
+        SELECT m.id, m.title, m.location, m.date, mp.image_path AS meeting_photo
+        FROM meetings m
+        LEFT JOIN meetingphotos mp ON m.id = mp.meeting_id
+    """)
     rows = cur.fetchall()
     cur.close()
     conn.close()
     return rows
 
+
 def get_meeting_details(meeting_id):
     conn = get_connection()
     cur = conn.cursor()
 
-    # メインのデート情報と外見画像パスを取得
+    # メインのデート情報、外見画像パス、デート写真パスを一度に取得
     cur.execute("""
-        SELECT m.id, m.title, m.location, m.date, ma.image_path 
+        SELECT 
+            m.id, m.title, m.location, m.date, 
+            ma.image_path AS my_appearance_image_path, 
+            mp.image_path AS meeting_photo,
+            en.event_name, pa.appearance, tt.topic, gp.good_point, tn.todo
         FROM meetings m
         LEFT JOIN myappearances ma ON ma.meeting_id = m.id
+        LEFT JOIN meetingphotos mp ON mp.meeting_id = m.id
+        LEFT JOIN eventnames en ON en.meeting_id = m.id
+        LEFT JOIN partnerappearances pa ON pa.meeting_id = m.id
+        LEFT JOIN talkedtopics tt ON tt.meeting_id = m.id
+        LEFT JOIN partnergoodpoints gp ON gp.meeting_id = m.id
+        LEFT JOIN todofornext tn ON tn.meeting_id = m.id
         WHERE m.id = %s
     """, (meeting_id,))
+    
     meeting = cur.fetchone()
 
     if not meeting:
         cur.close()
         conn.close()
         return None
-
-    # 各サブ情報を1つずつ取得（リストではなく単一値）
-    def fetch_single(query):
-        cur.execute(query, (meeting_id,))
-        row = cur.fetchone()
-        return row[0] if row else ""
-
-    event_name = fetch_single("SELECT event_name FROM eventnames WHERE meeting_id = %s")
-    appearance = fetch_single("SELECT appearance FROM partnerappearances WHERE meeting_id = %s")
-    topic = fetch_single("SELECT topic FROM talkedtopics WHERE meeting_id = %s")
-    good_point = fetch_single("SELECT good_point FROM partnergoodpoints WHERE meeting_id = %s")
-    todo = fetch_single("SELECT todo FROM todofornext WHERE meeting_id = %s")
 
     cur.close()
     conn.close()
@@ -48,12 +52,14 @@ def get_meeting_details(meeting_id):
         "location": meeting[2],
         "date": meeting[3],
         "my_appearance_image_path": meeting[4],
-        "event_names": event_name,
-        "partner_appearances": appearance,
-        "talked_topics": topic,
-        "partner_good_points": good_point,
-        "todo_for_next": todo
+        "meeting_photo": meeting[5],
+        "event_names": meeting[6],
+        "partner_appearances": meeting[7],
+        "talked_topics": meeting[8],
+        "partner_good_points": meeting[9],
+        "todo_for_next": meeting[10]
     }
+
 
 def update_meeting_data(meeting_id: int, data: dict):
 
@@ -105,15 +111,17 @@ def update_meeting_data(meeting_id: int, data: dict):
         WHERE meeting_id = %s
     """, (data["todo_for_next"], meeting_id))
 
-    # 画像パスの更新（もし提供されていれば）
-    if "my_appearance_image_path" in data:
-        # MyAppearancesテーブルに画像パスを更新（または新規挿入）
-        cur.execute("""
-            INSERT INTO myappearances (meeting_id, image_path)
-            VALUES (%s, %s)
-            ON CONFLICT (meeting_id) 
-            DO UPDATE SET image_path = EXCLUDED.image_path
-        """, (meeting_id, data["my_appearance_image_path"]))
+    cur.execute("""
+        UPDATE myappearances
+        SET image_path = %s
+        WHERE meeting_id = %s
+    """, (data["my_appearance_image_path"], meeting_id))
+
+    cur.execute("""
+        UPDATE meetingphotos
+        SET image_path = %s
+        WHERE meeting_id = %s
+    """, (data["meeting_photo"], meeting_id))
 
     conn.commit()
     cur.close()
@@ -159,12 +167,15 @@ def create_meeting_data(data: dict):
             VALUES (%s, %s)
         """, (meeting_id, data.get("todo_for_next", "")))
 
-        # 画像パス（任意）
-        if "my_appearance_image_path" in data:
-            cur.execute("""
-                INSERT INTO myappearances (meeting_id, image_path)
-                VALUES (%s, %s)
-            """, (meeting_id, data["my_appearance_image_path"]))
+        cur.execute("""
+            INSERT INTO myappearances (meeting_id, image_path)
+            VALUES (%s, %s)
+        """, (meeting_id, data.get("my_appearance_image_path", "")))
+
+        cur.execute("""
+            INSERT INTO meetingphotos (meeting_id, image_path)
+            VALUES (%s, %s)
+        """, (meeting_id, data.get("meeting_photo", "")))
 
         conn.commit()
         return meeting_id
