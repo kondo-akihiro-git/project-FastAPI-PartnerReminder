@@ -217,9 +217,16 @@ def get_all_good_points():
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT gp.id, gp.meeting_id, gp.good_point, m.location, m.date
+        SELECT
+            gp.id,
+            gp.meeting_id,
+            gp.good_point,
+            m.location,
+            m.date,
+            mp.image_path
         FROM partnergoodpoints gp
         JOIN meetings m ON gp.meeting_id = m.id
+        LEFT JOIN meetingphotos mp ON m.id = mp.meeting_id
         ORDER BY gp.id ASC
     """)
 
@@ -235,6 +242,7 @@ def get_all_good_points():
             "good_point": row[2],
             "location": row[3],
             "date": row[4].isoformat(),
+            "image": row[5],
         })
 
     return {"goodpoints": result}
