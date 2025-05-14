@@ -42,3 +42,7 @@ Content-Type: application/json
 {
   "ids": [1, 2, 3]
 }
+
+
+### 良いところ一覧の取得
+GET http://localhost:8000/goodpoints HTTP/1.1

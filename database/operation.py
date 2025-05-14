@@ -199,3 +199,31 @@ def delete_meetings_by_ids(ids: list[int]) -> int:
         conn.close()
 
     return deleted_count
+
+
+def get_all_good_points():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT gp.id, gp.meeting_id, gp.good_point, m.location, m.date
+        FROM partnergoodpoints gp
+        JOIN meetings m ON gp.meeting_id = m.id
+        ORDER BY gp.id ASC
+    """)
+
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    result = []
+    for row in rows:
+        result.append({
+            "id": row[0],
+            "meeting_id": row[1],
+            "good_point": row[2],
+            "location": row[3],
+            "date": row[4].isoformat(),
+        })
+
+    return {"goodpoints": result}
