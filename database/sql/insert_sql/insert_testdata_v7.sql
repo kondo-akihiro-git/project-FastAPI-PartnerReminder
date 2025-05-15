@@ -26,32 +26,32 @@ INSERT INTO Meetings (title, location, date) VALUES
 -- MyAppearances
 INSERT INTO MyAppearances (meeting_id, image_path) VALUES
 (1, ''),
-(2, 'files/uploaded_images/09B079EB-0F0A-4E6C-BBD3-2E3922F1E07B_1_201_a.jpg'),
-(3, 'files/uploaded_images/09B079EB-0F0A-4E6C-BBD3-2E3922F1E07B_1_201_a.jpg'),
-(4, 'files/uploaded_images/09B079EB-0F0A-4E6C-BBD3-2E3922F1E07B_1_201_a.jpg'),
-(5, 'files/uploaded_images/09B079EB-0F0A-4E6C-BBD3-2E3922F1E07B_1_201_a.jpg'),
-(6, 'files/uploaded_images/09B079EB-0F0A-4E6C-BBD3-2E3922F1E07B_1_201_a.jpg'),
-(7, 'files/uploaded_images/c218b93fae5549ae846171f64bbc3457.jpg'),
-(8, 'files/uploaded_images/c218b93fae5549ae846171f64bbc3457.jpg'),
-(9, 'files/uploaded_images/c218b93fae5549ae846171f64bbc3457.jpg'),
-(10, 'files/uploaded_images/c218b93fae5549ae846171f64bbc3457.jpg'),
-(11, ''),
-(12, '');
+(2, 'files/uploaded_images/hand-886420_1280.jpg'),
+(3, 'files/uploaded_images/shoe-2313143_1280.jpg'),
+(4, 'files/uploaded_images/zip-1268656_1280.jpg'),
+(5, 'files/uploaded_images/oxford-shoes-6078993_1280.jpg'),
+(6, 'files/uploaded_images/ties-56107_1280.jpg'),
+(7, 'files/uploaded_images/shirts-591750_1280.jpg'),
+(8, 'files/uploaded_images/clothes-1846128_1280.jpg'),
+(9, 'files/uploaded_images/jeans-2551188_1280.jpg'),
+(10, 'files/uploaded_images/neckties-210451_1280.jpg'),
+(11, 'files/uploaded_images/necktie-1284463_1280.jpg'),
+(12, 'files/uploaded_images/shirts-591756_1280.jpg');
 
 -- MeetingPhotos
 INSERT INTO MeetingPhotos (meeting_id, image_path) VALUES
-(1, 'files/uploaded_images/ecee31cb343849db89802d32bb3171c8.jpg'),
-(2, 'files/uploaded_images/ecee31cb343849db89802d32bb3171c8.jpg'),
-(3, 'files/uploaded_images/ecee31cb343849db89802d32bb3171c8.jpg'),
-(4, 'files/uploaded_images/ecee31cb343849db89802d32bb3171c8.jpg'),
-(5, 'files/uploaded_images/ecee31cb343849db89802d32bb3171c8.jpg'),
-(6, ''),
-(7, ''),
-(8, 'files/uploaded_images/de566ec8a29647078bd30c8aca9aae06.png'),
-(9, 'files/uploaded_images/de566ec8a29647078bd30c8aca9aae06.png'),
-(10, 'files/uploaded_images/de566ec8a29647078bd30c8aca9aae06.png'),
-(11, 'files/uploaded_images/de566ec8a29647078bd30c8aca9aae06.png'),
-(12, 'files/uploaded_images/de566ec8a29647078bd30c8aca9aae06.png');
+(1, ''),
+(2, 'files/uploaded_images/bridge-7779222_1280.jpg'),
+(3, 'files/uploaded_images/gallery-3114279_1280.jpg'),
+(4, 'files/uploaded_images/art-3802145_1280.jpg'),
+(5, 'files/uploaded_images/forget-me-not-5143015_1280.jpg'),
+(6, 'files/uploaded_images/herbstastern-5938056_1280.jpg'),
+(7, 'files/uploaded_images/road-6881040_1280.jpg'),
+(8, 'files/uploaded_images/student-1258137_1280.jpg'),
+(9, 'files/uploaded_images/gallery-2901718_1280.jpg'),
+(10, 'files/uploaded_images/city-7492749_1280.jpg'),
+(11, 'files/uploaded_images/gallery-1570804_1280.jpg'),
+(12, 'files/uploaded_images/summer-783347_1280.jpg');
 
 
 -- EventNames
