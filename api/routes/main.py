@@ -14,6 +14,10 @@ import shutil
 import os
 from database.operation import delete_meetings_by_ids
 from database.operation import get_all_good_points
+from database.operation import create_user, authenticate_user
+import smtplib
+from email.mime.text import MIMEText
+import random
 
 app = FastAPI()
 
@@ -83,3 +87,57 @@ def delete_meetings(request: DeleteRequest):
 def read_good_points():
     rows = get_all_good_points()
     return {"goodpoints": rows}
+
+class RegisterRequest(BaseModel):
+    name: str
+    phone: str
+    email: str
+    password: str
+    code: str  
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class EmailRequest(BaseModel):
+    email: str
+
+# メモリ上に一時保存（本番ならRedisなど）
+email_verification_codes = {}
+
+@app.post("/send_verification_code")
+def send_verification_code(req: EmailRequest):
+    code = str(random.randint(100000, 999999))
+    email_verification_codes[req.email] = code
+
+    # Mailpit でメール送信
+    msg = MIMEText(f"あなたの認証コードは {code} です。")
+    msg["Subject"] = "【認証コード】ユーザー登録確認"
+    msg["From"] = "noreply@example.com"
+    msg["To"] = req.email
+
+    try:
+        with smtplib.SMTP("localhost", 1025) as server:
+            server.send_message(msg)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="メール送信に失敗しました")
+
+    return {"message": "認証コードを送信しました"}
+
+@app.post("/register")
+def register_user(data: RegisterRequest):
+    if email_verification_codes.get(data.email) != data.code:
+        raise HTTPException(status_code=400, detail="認証コードが無効です")
+
+    try:
+        user_id = create_user(data.name, data.phone, data.email, data.password)
+        return {"message": "登録成功", "user_id": user_id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="登録に失敗しました")
+
+@app.post("/login")
+def login_user(data: LoginRequest):
+    user_id = authenticate_user(data.email, data.password)
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="認証失敗")
+    return {"message": "ログイン成功", "user_id": user_id}

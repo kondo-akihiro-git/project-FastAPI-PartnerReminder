@@ -46,6 +46,25 @@ Content-Type: application/json
   "ids": [1, 2, 3]
 }
 
-
 ### 良いところ一覧の取得
 GET http://localhost:8000/goodpoints HTTP/1.1
+
+### ユーザー登録
+POST http://localhost:8000/register
+Content-Type: application/json
+
+{
+  "name": "横越秀",
+  "phone": "09012345678",
+  "email": "shu@example.com",
+  "password": "pass0101"
+}
+
+### ログイン
+POST http://localhost:8000/login
+Content-Type: application/json
+
+{
+  "email": "shu@example.com",
+  "password": "pass0101"
+}

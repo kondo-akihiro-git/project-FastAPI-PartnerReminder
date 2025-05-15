@@ -1,4 +1,5 @@
 from database.connection import get_connection
+import bcrypt
 
 def get_meetings():
     conn = get_connection()
@@ -246,3 +247,38 @@ def get_all_good_points():
         })
 
     return {"goodpoints": result}
+
+
+def create_user(name, phone, email, password):
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        cur.execute(
+            "INSERT INTO Users (name, phone, email, password_hash) VALUES (%s, %s, %s, %s) RETURNING id",
+            (name, phone, email, hashed_pw)
+        )
+        user_id = cur.fetchone()[0]
+        conn.commit()
+        return user_id
+    except Exception as e:
+        conn.rollback()
+        print("ユーザー作成エラー:", e)
+        return None
+    finally:
+        cur.close()
+        conn.close()
+
+
+def authenticate_user(email, password):
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT id, password_hash FROM Users WHERE email=%s", (email,))
+        result = cur.fetchone()
+        if result and bcrypt.checkpw(password.encode(), result[1].encode()):
+            return result[0]
+        return None
+    finally:
+        cur.close()
+        conn.close()
