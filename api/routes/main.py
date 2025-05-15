@@ -18,6 +18,7 @@ from database.operation import create_user, authenticate_user
 import smtplib
 from email.mime.text import MIMEText
 import random
+from database.operation import user_exists 
 
 app = FastAPI()
 
@@ -141,3 +142,9 @@ def login_user(data: LoginRequest):
     if user_id is None:
         raise HTTPException(status_code=401, detail="認証失敗")
     return {"message": "ログイン成功", "user_id": user_id}
+
+@app.get("/verify-user/{user_id}")
+def verify_user(user_id: int):
+    if not user_exists(user_id):
+        raise HTTPException(status_code=404, detail="ユーザーが存在しません")
+    return {"message": "ユーザーは存在します"}

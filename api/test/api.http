@@ -68,3 +68,6 @@ Content-Type: application/json
   "email": "shu@example.com",
   "password": "pass0101"
 }
+
+### ログイン状態検証
+GET http://localhost:8000/verify-user/1 HTTP/1.1
