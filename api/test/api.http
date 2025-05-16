@@ -49,7 +49,7 @@ Content-Type: application/json
 ### 良いところ一覧の取得
 GET http://localhost:8000/goodpoints HTTP/1.1
 
-### ユーザー登録
+### ユーザー登録(メール認証後)
 POST http://localhost:8000/register
 Content-Type: application/json
 
@@ -75,8 +75,8 @@ POST http://localhost:8000/login
 Content-Type: application/json
 
 {
-  "email": "shu@example.com",
-  "password": "pass0101"
+  "email": "test@test.com",
+  "password": "password123"
 }
 
 ### ログイン状態検証
