@@ -70,3 +70,9 @@ CREATE TABLE Users (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL
 );
+
+DROP TABLE IF EXISTS NextEventDay;
+CREATE TABLE NextEventDay (
+    id SERIAL PRIMARY KEY,
+    date DATE NOT NULL
+);

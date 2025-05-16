@@ -7,6 +7,7 @@ DELETE FROM PartnerAppearances;
 DELETE FROM EventNames;
 DELETE FROM MyAppearances;
 DELETE FROM Meetings;
+DELETE FROM NextEventDay;
 
 -- Meetings テーブル
 INSERT INTO Meetings (title, location, date) VALUES
@@ -135,3 +136,5 @@ INSERT INTO Users (name, phone, email, password_hash) VALUES
 ('田中 太郎', '09011112222', 'taro@example.com', '$2b$12$KIXQ3h3Zc9Eq3Y1/nzSgXeYgikfsMnLFXdL2o.LxO5mlzjK9us1yi'),
 ('山田 花子', '08033334444', 'hanako@example.com', '$2b$12$KIXQ3h3Zc9Eq3Y1/nzSgXeYgikfsMnLFXdL2o.LxO5mlzjK9us1yi'),
 ('佐藤 一郎', '07055556666', 'ichiro@example.com', '$2b$12$KIXQ3h3Zc9Eq3Y1/nzSgXeYgikfsMnLFXdL2o.LxO5mlzjK9us1yi');
+
+INSERT INTO NextEventDay (date) VALUES ('2025-05-20');

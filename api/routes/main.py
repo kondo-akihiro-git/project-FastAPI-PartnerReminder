@@ -6,7 +6,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from api.models.meeting import Meeting
-from database.operation import get_meetings,get_meeting_details
+from database.operation import get_meetings,get_meeting_details, get_next_event_day
 from database.operation import update_meeting_data
 from database.operation import create_meeting_data
 from fastapi.middleware.cors import CORSMiddleware
@@ -173,3 +173,10 @@ def get_user(user_id: int):
     if not user:
         raise HTTPException(status_code=404, detail="ユーザーが見つかりませんでした")
     return {"user": user}
+
+@app.get("/next")
+def read_next_event_day():
+    next_day = get_next_event_day()
+    if next_day is None:
+        raise HTTPException(status_code=404, detail="次の予定が見つかりませんでした。")
+    return next_day

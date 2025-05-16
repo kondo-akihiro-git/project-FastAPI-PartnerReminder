@@ -336,3 +336,15 @@ def get_user_by_id(user_id: int):
             "email": user[3]
         }
     return None
+
+
+
+def get_next_event_day():
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT date FROM NextEventDay ORDER BY date ASC LIMIT 1;")
+            row = cur.fetchone()
+            return {"date": row[0]} if row else None
+    finally:
+        conn.close()

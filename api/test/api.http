@@ -86,3 +86,6 @@ Content-Type: application/json
   "password": "newpassword123"
 }
 
+### 次の予定情報の取得
+GET http://localhost:8000/next
+Content-Type: application/json
