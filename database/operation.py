@@ -1,4 +1,7 @@
+import jwt
+from datetime import datetime, timedelta
 from database.connection import get_connection
+import bcrypt
 
 def get_meetings():
     conn = get_connection()
@@ -246,3 +249,127 @@ def get_all_good_points():
         })
 
     return {"goodpoints": result}
+
+
+def create_user(name, phone, email, password):
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        cur.execute(
+            "INSERT INTO Users (name, phone, email, password_hash) VALUES (%s, %s, %s, %s) RETURNING id",
+            (name, phone, email, hashed_pw)
+        )
+        user_id = cur.fetchone()[0]
+        conn.commit()
+        return user_id
+    except Exception as e:
+        conn.rollback()
+        print("ユーザー作成エラー:", e)
+        return None
+    finally:
+        cur.close()
+        conn.close()
+
+
+def authenticate_user(email, password):
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT id, password_hash FROM Users WHERE email=%s", (email,))
+        result = cur.fetchone()
+        if result and bcrypt.checkpw(password.encode(), result[1].encode()):
+            return result[0]
+        return None
+    finally:
+        cur.close()
+        conn.close()
+
+
+def user_exists(user_id: int) -> bool:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM users WHERE id = %s", (user_id,))
+    result = cursor.fetchone()
+    conn.close()
+    return result is not None
+
+
+def update_user_info(user_id: int, name: str,phone: str, hashed_password: str) -> bool:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # ユーザー存在チェック
+    cur.execute("SELECT id FROM Users WHERE id = %s", (user_id,))
+    if cur.fetchone() is None:
+        cur.close()
+        conn.close()
+        return False
+
+    try:
+        cur.execute("""
+            UPDATE Users
+            SET name = %s, password_hash = %s, phone = %s
+            WHERE id = %s
+        """, (name, hashed_password, phone, user_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"ユーザー更新エラー: {e}")
+        conn.rollback()
+        return False
+    finally:
+        cur.close()
+        conn.close()
+
+def get_user_by_id(user_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, phone, email FROM users WHERE id = %s", (user_id,))
+    user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if user:
+        return {
+            "id": user[0],
+            "name": user[1],
+            "phone": user[2],
+            "email": user[3]
+        }
+    return None
+
+
+
+def get_next_event_day():
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT date FROM NextEventDay ORDER BY date ASC LIMIT 1;")
+            row = cur.fetchone()
+            return {"date": row[0]} if row else None
+    finally:
+        conn.close()
+
+
+# JWTのシークレットとアルゴリズム（環境変数にした方が良い）
+JWT_SECRET = "your_secret_key"
+JWT_ALGORITHM = "HS256"
+JWT_EXP_DELTA_SECONDS = 3600  # 1時間
+
+def create_jwt_token(user_id: int) -> str:
+    payload = {
+        "user_id": user_id,
+        "exp": datetime.utcnow() + timedelta(seconds=JWT_EXP_DELTA_SECONDS)
+    }
+    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return token
+
+def decode_jwt_token(token: str):
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None

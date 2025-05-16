@@ -1,11 +1,12 @@
 # api/main.py
 from typing import List
 from uuid import uuid4
+import bcrypt
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from api.models.meeting import Meeting
-from database.operation import get_meetings,get_meeting_details
+from database.operation import get_meetings,get_meeting_details, get_next_event_day
 from database.operation import update_meeting_data
 from database.operation import create_meeting_data
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,12 +15,24 @@ import shutil
 import os
 from database.operation import delete_meetings_by_ids
 from database.operation import get_all_good_points
+from database.operation import create_user, authenticate_user
+import smtplib
+from email.mime.text import MIMEText
+import random
+from database.operation import user_exists 
+from database.operation import update_user_info
+from fastapi import Path
+from database.operation import get_user_by_id
+from fastapi import Response, Cookie, Depends
+import jwt
+from database.operation import create_jwt_token, decode_jwt_token
+
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React のアドレス
+    allow_origins=["http://localhost:3000", "http://localhost:8000"],  # React のアドレス
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -83,3 +96,126 @@ def delete_meetings(request: DeleteRequest):
 def read_good_points():
     rows = get_all_good_points()
     return {"goodpoints": rows}
+
+class RegisterRequest(BaseModel):
+    name: str
+    phone: str
+    email: str
+    password: str
+    code: str  
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class EmailRequest(BaseModel):
+    email: str
+
+# メモリ上に一時保存（本番ならRedisなど）
+email_verification_codes = {}
+
+@app.post("/send_verification_code")
+def send_verification_code(req: EmailRequest):
+    code = str(random.randint(100000, 999999))
+    email_verification_codes[req.email] = code
+
+    # Mailpit でメール送信
+    msg = MIMEText(f"あなたの認証コードは {code} です。")
+    msg["Subject"] = "【認証コード】ユーザー登録確認"
+    msg["From"] = "noreply@example.com"
+    msg["To"] = req.email
+
+    try:
+        with smtplib.SMTP("localhost", 1025) as server:
+            server.send_message(msg)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="メール送信に失敗しました")
+
+    return {"message": "認証コードを送信しました"}
+
+@app.post("/register")
+def register_user(data: RegisterRequest):
+    if email_verification_codes.get(data.email) != data.code:
+        raise HTTPException(status_code=400, detail="認証コードが無効です")
+
+    try:
+        user_id = create_user(data.name, data.phone, data.email, data.password)
+        return {"message": "登録成功", "user_id": user_id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="登録に失敗しました")
+
+# ログイン処理（JWT発行・HTTP-only Cookieセット）
+@app.post("/login")
+def login(req: LoginRequest, response: Response):
+    user_id = authenticate_user(req.email, req.password)
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="メールアドレスかパスワードが違います。")
+
+    token = create_jwt_token(user_id)
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        max_age=3600,
+        samesite="lax",
+        path="/",
+        secure=False
+    )
+    return {"message": "ログイン成功", "user_id": user_id, "response":response}
+
+# ログアウト処理（Cookie削除）
+@app.post("/logout")
+def logout(response: Response):
+    response.delete_cookie("access_token", path="/")
+    return {"message": "ログアウトしました"}
+
+
+# 認証済みユーザー情報取得
+def get_current_user(access_token: str = Cookie(None)):
+    if access_token is None:
+        raise HTTPException(status_code=401, detail="未認証です")
+    payload = decode_jwt_token(access_token)
+    if payload is None:
+        raise HTTPException(status_code=401, detail="トークンが無効か期限切れです")
+    user = get_user_by_id(payload["user_id"])
+    if user is None:
+        raise HTTPException(status_code=401, detail="ユーザーが存在しません")
+    return user
+
+@app.get("/me")
+def read_current_user(user=Depends(get_current_user)):
+    return {"user": user}
+
+@app.get("/verify-user/{user_id}")
+def verify_user(user_id: int):
+    if not user_exists(user_id):
+        raise HTTPException(status_code=404, detail="ユーザーが存在しません")
+    return {"message": "ユーザーは存在します"}
+
+
+class UserUpdateRequest(BaseModel):
+    name: str
+    phone: str
+    password: str
+
+@app.put("/users/{user_id}")
+def update_user(user_id: int = Path(...), data: UserUpdateRequest = Body(...)):
+    hashed_pw = bcrypt.hashpw(data.password.encode(), bcrypt.gensalt()).decode()
+    success = update_user_info(user_id, data.name,data.phone, hashed_pw)
+    if not success:
+        raise HTTPException(status_code=404, detail="更新対象のユーザーが存在しません。")
+    return {"message": "ユーザー情報を更新しました"}
+
+@app.get("/users/{user_id}")
+def get_user(user_id: int):
+    user = get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="ユーザーが見つかりませんでした")
+    return {"user": user}
+
+@app.get("/next")
+def read_next_event_day():
+    next_day = get_next_event_day()
+    if next_day is None:
+        raise HTTPException(status_code=404, detail="次の予定が見つかりませんでした。")
+    return next_day

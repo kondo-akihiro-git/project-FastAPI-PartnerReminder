@@ -46,6 +46,75 @@ Content-Type: application/json
   "ids": [1, 2, 3]
 }
 
-
 ### 良いところ一覧の取得
 GET http://localhost:8000/goodpoints HTTP/1.1
+
+### ユーザー登録(メール認証後)
+POST http://localhost:8000/register
+Content-Type: application/json
+
+{
+  "name": "横越秀",
+  "phone": "09012345678",
+  "email": "test@test.com",
+  "password": "password123",
+  "code":"970065"
+}
+
+### メール認証
+POST http://localhost:8000/send_verification_code
+Content-Type: application/json
+
+{
+  "email": "test@test.com"
+}
+
+
+### ログイン
+POST http://localhost:8000/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password123"
+}
+
+### ログイン状態検証
+GET http://localhost:8000/verify-user/1 HTTP/1.1
+
+### ユーザー情報の取得
+GET http://localhost:8000/users/4
+Content-Type: application/json
+
+
+### ユーザー情報の更新（ユーザー名とパスワード）
+PUT http://localhost:8000/users/1
+Content-Type: application/json
+
+{
+  "name": "新しい名前",
+  "phone": "09012345678",
+  "password": "newpassword123"
+}
+
+### 次の予定情報の取得
+GET http://localhost:8000/next
+Content-Type: application/json
+
+### ログイン成功（credentialがincludeできないのでCookie保存できない）
+POST http://localhost:8000/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password123"
+}
+
+### 認証済みユーザー情報取得（Cookieを送る必要あり）
+GET http://localhost:8000/me
+Cookie: access_token=""
+
+### ログアウト
+POST http://localhost:8000/logout
+
+
