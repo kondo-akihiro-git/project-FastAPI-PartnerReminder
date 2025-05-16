@@ -1,4 +1,29 @@
--- 既存データ削除
+import psycopg2
+import bcrypt
+import os
+from dotenv import load_dotenv
+
+# backendから実行コマンド ： python database/sql/insert_test_data.py 
+
+# .env読み込み
+load_dotenv()
+
+# DB接続
+conn = psycopg2.connect(
+    dbname=os.getenv("DB_NAME"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    host=os.getenv("DB_HOST"),
+    port=os.getenv("DB_PORT"),
+)
+cur = conn.cursor()
+
+# パスワード「test」のハッシュ化
+password = "test"
+hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+# 全削除SQL
+delete_sql = """
 DELETE FROM Users;
 DELETE FROM TodoForNext;
 DELETE FROM PartnerGoodPoints;
@@ -6,10 +31,16 @@ DELETE FROM TalkedTopics;
 DELETE FROM PartnerAppearances;
 DELETE FROM EventNames;
 DELETE FROM MyAppearances;
+DELETE FROM MeetingPhotos;
 DELETE FROM Meetings;
 DELETE FROM NextEventDay;
+"""
 
--- Meetings テーブル
+# 実行
+cur.execute(delete_sql)
+
+# Meetings 挿入
+cur.execute("""
 INSERT INTO Meetings (title, location, date) VALUES
 ('水族館デート', '品川水族館', '2024-04-15'),
 ('カフェでまったり', '代官山カフェ', '2024-04-22'),
@@ -23,8 +54,12 @@ INSERT INTO Meetings (title, location, date) VALUES
 ('美術館と読書の話', '六本木', '2024-05-18'),
 ('川沿い散歩', '中目黒', '2024-05-21'),
 ('夜のイルミネーション', '表参道', '2024-05-25');
+""")
 
--- MyAppearances
+# 以下、各種 INSERT を順番にまとめて実行（順番注意）
+
+# MyAppearances
+cur.execute("""
 INSERT INTO MyAppearances (meeting_id, image_path) VALUES
 (1, ''),
 (2, 'files/uploaded_images/hand-886420_1280.jpg'),
@@ -38,8 +73,10 @@ INSERT INTO MyAppearances (meeting_id, image_path) VALUES
 (10, 'files/uploaded_images/neckties-210451_1280.jpg'),
 (11, 'files/uploaded_images/necktie-1284463_1280.jpg'),
 (12, 'files/uploaded_images/shirts-591756_1280.jpg');
+""")
 
--- MeetingPhotos
+# MeetingPhotos
+cur.execute("""
 INSERT INTO MeetingPhotos (meeting_id, image_path) VALUES
 (1, ''),
 (2, 'files/uploaded_images/bridge-7779222_1280.jpg'),
@@ -53,9 +90,10 @@ INSERT INTO MeetingPhotos (meeting_id, image_path) VALUES
 (10, 'files/uploaded_images/city-7492749_1280.jpg'),
 (11, 'files/uploaded_images/gallery-1570804_1280.jpg'),
 (12, 'files/uploaded_images/summer-783347_1280.jpg');
+""")
 
-
--- EventNames
+# EventNames
+cur.execute("""
 INSERT INTO EventNames (meeting_id, event_name) VALUES
 (1, E'水族館\nランチ'),
 (2, 'カフェ'),
@@ -69,8 +107,10 @@ INSERT INTO EventNames (meeting_id, event_name) VALUES
 (10, E'美術館鑑賞\n読書の話'),
 (11, '川沿いの散歩'),
 (12, E'イルミネーション\n写真撮影');
+""")
 
--- PartnerAppearances
+# PartnerAppearances
+cur.execute("""
 INSERT INTO PartnerAppearances (meeting_id, appearance) VALUES
 (1, E'ロングヘア\n白いワンピース'),
 (2, ''),
@@ -84,8 +124,10 @@ INSERT INTO PartnerAppearances (meeting_id, appearance) VALUES
 (10, E'シンプルな服装\n落ち着いた雰囲気'),
 (11, E'ポニーテール\nワンピース'),
 (12, E'ニット帽\nロングコート');
+""")
 
--- TalkedTopics
+# TalkedTopics
+cur.execute("""
 INSERT INTO TalkedTopics (meeting_id, topic) VALUES
 (1, E'海の生き物の話\n旅行の計画'),
 (2, E'最近読んだ本\n好きな作家'),
@@ -99,8 +141,10 @@ INSERT INTO TalkedTopics (meeting_id, topic) VALUES
 (10, E'アートの話\n美術館の展示'),
 (11, ''),
 (12, E'夜景スポットの話\n写真撮影のコツ');
+""")
 
--- PartnerGoodPoints
+# PartnerGoodPoints
+cur.execute("""
 INSERT INTO PartnerGoodPoints (meeting_id, good_point) VALUES
 (1, E'優しい話し方\n気配りが素晴らしい'),
 (2, E'笑顔が素敵\n話が面白い'),
@@ -114,8 +158,10 @@ INSERT INTO PartnerGoodPoints (meeting_id, good_point) VALUES
 (10, ''),
 (11, E'話しやすい\n自然体でいられる'),
 (12, '');
+""")
 
--- TodoForNext
+# TodoForNext
+cur.execute("""
 INSERT INTO TodoForNext (meeting_id, todo) VALUES
 (1, E'次は動物園に行く予定\nランチの場所を決める'),
 (2, ''),
@@ -129,14 +175,22 @@ INSERT INTO TodoForNext (meeting_id, todo) VALUES
 (10, E'美術館のチケットを取る\nカフェでゆっくり過ごす'),
 (11, ''),
 (12, E'次は夜景ドライブを計画\nカメラを新調する');
+""")
 
-
--- bcrypt hashed password for "test"（例）
+# Users
+cur.execute("""
 INSERT INTO Users (name, phone, email, password_hash) VALUES
-('田中 太郎', '09011112222', 'a@a.com', '$2b$12$6X6VYLPDIHZacWjqZPqj8eNnsL7fdmSpZ0ILSLD5R58qH3HgQfAnC'),
-('山田 花子', '08033334444', 'hanako@example.com', '$2b$12$6X6VYLPDIHZacWjqZPqj8eNnsL7fdmSpZ0ILSLD5R58qH3HgQfAnC'),
-('佐藤 一郎', '07055556666', 'ichiro@example.com', '$2b$12$6X6VYLPDIHZacWjqZPqj8eNnsL7fdmSpZ0ILSLD5R58qH3HgQfAnC');
+('田中 太郎', '09011112222', 'a@a.com', %s),
+('山田 花子', '08033334444', 'hanako@example.com', %s),
+('佐藤 一郎', '07055556666', 'ichiro@example.com', %s);
+""", (hashed_password, hashed_password, hashed_password))
 
+# NextEventDay
+cur.execute("INSERT INTO NextEventDay (date) VALUES ('2025-05-20');")
 
+# コミット & 終了
+conn.commit()
+cur.close()
+conn.close()
 
-INSERT INTO NextEventDay (date) VALUES ('2025-05-20');
+print("✅ テストデータ挿入が完了しました。")
