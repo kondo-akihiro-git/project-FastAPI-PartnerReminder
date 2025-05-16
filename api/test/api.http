@@ -93,6 +93,7 @@ Content-Type: application/json
 
 {
   "name": "新しい名前",
+  "phone": "09012345678",
   "password": "newpassword123"
 }
 

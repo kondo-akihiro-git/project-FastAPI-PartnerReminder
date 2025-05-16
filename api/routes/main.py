@@ -195,12 +195,13 @@ def verify_user(user_id: int):
 
 class UserUpdateRequest(BaseModel):
     name: str
+    phone: str
     password: str
 
 @app.put("/users/{user_id}")
 def update_user(user_id: int = Path(...), data: UserUpdateRequest = Body(...)):
     hashed_pw = bcrypt.hashpw(data.password.encode(), bcrypt.gensalt()).decode()
-    success = update_user_info(user_id, data.name, hashed_pw)
+    success = update_user_info(user_id, data.name,data.phone, hashed_pw)
     if not success:
         raise HTTPException(status_code=404, detail="更新対象のユーザーが存在しません。")
     return {"message": "ユーザー情報を更新しました"}

@@ -295,7 +295,7 @@ def user_exists(user_id: int) -> bool:
     return result is not None
 
 
-def update_user_info(user_id: int, name: str, hashed_password: str) -> bool:
+def update_user_info(user_id: int, name: str,phone: str, hashed_password: str) -> bool:
     conn = get_connection()
     cur = conn.cursor()
 
@@ -309,9 +309,9 @@ def update_user_info(user_id: int, name: str, hashed_password: str) -> bool:
     try:
         cur.execute("""
             UPDATE Users
-            SET name = %s, password_hash = %s
+            SET name = %s, password_hash = %s, phone = %s
             WHERE id = %s
-        """, (name, hashed_password, user_id))
+        """, (name, hashed_password, phone, user_id))
         conn.commit()
         return True
     except Exception as e:
