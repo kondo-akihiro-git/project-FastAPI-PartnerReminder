@@ -26,6 +26,7 @@ from database.operation import get_user_by_id
 from fastapi import Response, Cookie, Depends
 import jwt
 from database.operation import create_jwt_token, decode_jwt_token
+from database.operation import update_next_event_day
 
 
 app = FastAPI()
@@ -219,3 +220,17 @@ def read_next_event_day():
     if next_day is None:
         raise HTTPException(status_code=404, detail="次の予定が見つかりませんでした。")
     return next_day
+
+
+class NextEventUpdateRequest(BaseModel):
+    date: str  # 形式: YYYY-MM-DD
+
+@app.put("/next")
+def update_next_event(req: NextEventUpdateRequest):
+    try:
+        success = update_next_event_day(req.date)
+        if not success:
+            raise HTTPException(status_code=500, detail="次回イベント日の更新に失敗しました。")
+        return {"message": "次回イベント日を更新しました"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

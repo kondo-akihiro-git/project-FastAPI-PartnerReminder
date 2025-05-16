@@ -351,6 +351,27 @@ def get_next_event_day():
     finally:
         conn.close()
 
+def update_next_event_day(new_date: str):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # NextEventDay テーブルにレコードが存在するか確認
+    cur.execute("SELECT id FROM NextEventDay LIMIT 1")
+    row = cur.fetchone()
+
+    if row:
+        # 存在すれば更新
+        cur.execute("UPDATE NextEventDay SET date = %s WHERE id = %s", (new_date, row[0]))
+    else:
+        # 存在しなければ挿入
+        cur.execute("INSERT INTO NextEventDay (date) VALUES (%s)", (new_date,))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    return True
+
+
 
 # JWTのシークレットとアルゴリズム（環境変数にした方が良い）
 JWT_SECRET = "your_secret_key"

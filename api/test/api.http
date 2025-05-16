@@ -101,6 +101,15 @@ Content-Type: application/json
 GET http://localhost:8000/next
 Content-Type: application/json
 
+### 次の予定日の更新
+PUT http://localhost:8000/next
+Content-Type: application/json
+
+{
+  "date": "2025-06-01"
+}
+
+
 ### ログイン成功（credentialがincludeできないのでCookie保存できない）
 POST http://localhost:8000/login
 Content-Type: application/json
