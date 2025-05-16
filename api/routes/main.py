@@ -22,6 +22,8 @@ import random
 from database.operation import user_exists 
 from database.operation import update_user_info
 from fastapi import Path
+from database.operation import get_user_by_id
+
 
 app = FastAPI()
 
@@ -164,3 +166,10 @@ def update_user(user_id: int = Path(...), data: UserUpdateRequest = Body(...)):
     if not success:
         raise HTTPException(status_code=404, detail="更新対象のユーザーが存在しません。")
     return {"message": "ユーザー情報を更新しました"}
+
+@app.get("/users/{user_id}")
+def get_user(user_id: int):
+    user = get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="ユーザーが見つかりませんでした")
+    return {"user": user}
