@@ -23,13 +23,16 @@ from database.operation import user_exists
 from database.operation import update_user_info
 from fastapi import Path
 from database.operation import get_user_by_id
+from fastapi import Response, Cookie, Depends
+import jwt
+from database.operation import create_jwt_token, decode_jwt_token
 
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React のアドレス
+    allow_origins=["http://localhost:3000", "http://localhost:8000"],  # React のアドレス
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -141,12 +144,47 @@ def register_user(data: RegisterRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail="登録に失敗しました")
 
+# ログイン処理（JWT発行・HTTP-only Cookieセット）
 @app.post("/login")
-def login_user(data: LoginRequest):
-    user_id = authenticate_user(data.email, data.password)
+def login(req: LoginRequest, response: Response):
+    user_id = authenticate_user(req.email, req.password)
     if user_id is None:
-        raise HTTPException(status_code=401, detail="認証失敗")
-    return {"message": "ログイン成功", "user_id": user_id}
+        raise HTTPException(status_code=401, detail="メールアドレスかパスワードが違います。")
+
+    token = create_jwt_token(user_id)
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        max_age=3600,
+        samesite="lax",
+        path="/",
+        secure=False
+    )
+    return {"message": "ログイン成功", "user_id": user_id, "response":response}
+
+# ログアウト処理（Cookie削除）
+@app.post("/logout")
+def logout(response: Response):
+    response.delete_cookie("access_token", path="/")
+    return {"message": "ログアウトしました"}
+
+
+# 認証済みユーザー情報取得
+def get_current_user(access_token: str = Cookie(None)):
+    if access_token is None:
+        raise HTTPException(status_code=401, detail="未認証です")
+    payload = decode_jwt_token(access_token)
+    if payload is None:
+        raise HTTPException(status_code=401, detail="トークンが無効か期限切れです")
+    user = get_user_by_id(payload["user_id"])
+    if user is None:
+        raise HTTPException(status_code=401, detail="ユーザーが存在しません")
+    return user
+
+@app.get("/me")
+def read_current_user(user=Depends(get_current_user)):
+    return {"user": user}
 
 @app.get("/verify-user/{user_id}")
 def verify_user(user_id: int):

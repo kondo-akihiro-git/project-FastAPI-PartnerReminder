@@ -99,3 +99,21 @@ Content-Type: application/json
 ### 次の予定情報の取得
 GET http://localhost:8000/next
 Content-Type: application/json
+
+### ログイン成功（credentialがincludeできないのでCookie保存できない）
+POST http://localhost:8000/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password123"
+}
+
+### 認証済みユーザー情報取得（Cookieを送る必要あり）
+GET http://localhost:8000/me
+Cookie: access_token=""
+
+### ログアウト
+POST http://localhost:8000/logout
+
+

@@ -1,3 +1,5 @@
+import jwt
+from datetime import datetime, timedelta
 from database.connection import get_connection
 import bcrypt
 
@@ -348,3 +350,26 @@ def get_next_event_day():
             return {"date": row[0]} if row else None
     finally:
         conn.close()
+
+
+# JWTのシークレットとアルゴリズム（環境変数にした方が良い）
+JWT_SECRET = "your_secret_key"
+JWT_ALGORITHM = "HS256"
+JWT_EXP_DELTA_SECONDS = 3600  # 1時間
+
+def create_jwt_token(user_id: int) -> str:
+    payload = {
+        "user_id": user_id,
+        "exp": datetime.utcnow() + timedelta(seconds=JWT_EXP_DELTA_SECONDS)
+    }
+    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return token
+
+def decode_jwt_token(token: str):
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
