@@ -56,9 +56,19 @@ Content-Type: application/json
 {
   "name": "横越秀",
   "phone": "09012345678",
-  "email": "shu@example.com",
-  "password": "pass0101"
+  "email": "test@test.com",
+  "password": "password123",
+  "code":"970065"
 }
+
+### メール認証
+POST http://localhost:8000/send_verification_code
+Content-Type: application/json
+
+{
+  "email": "test@test.com"
+}
+
 
 ### ログイン
 POST http://localhost:8000/login
