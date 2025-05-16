@@ -1,6 +1,7 @@
 # api/main.py
 from typing import List
 from uuid import uuid4
+import bcrypt
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -19,6 +20,8 @@ import smtplib
 from email.mime.text import MIMEText
 import random
 from database.operation import user_exists 
+from database.operation import update_user_info
+from fastapi import Path
 
 app = FastAPI()
 
@@ -148,3 +151,16 @@ def verify_user(user_id: int):
     if not user_exists(user_id):
         raise HTTPException(status_code=404, detail="ユーザーが存在しません")
     return {"message": "ユーザーは存在します"}
+
+
+class UserUpdateRequest(BaseModel):
+    name: str
+    password: str
+
+@app.put("/users/{user_id}")
+def update_user(user_id: int = Path(...), data: UserUpdateRequest = Body(...)):
+    hashed_pw = bcrypt.hashpw(data.password.encode(), bcrypt.gensalt()).decode()
+    success = update_user_info(user_id, data.name, hashed_pw)
+    if not success:
+        raise HTTPException(status_code=404, detail="更新対象のユーザーが存在しません。")
+    return {"message": "ユーザー情報を更新しました"}

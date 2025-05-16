@@ -71,3 +71,14 @@ Content-Type: application/json
 
 ### ログイン状態検証
 GET http://localhost:8000/verify-user/1 HTTP/1.1
+
+
+### ユーザー情報の更新（ユーザー名とパスワード）
+PUT http://localhost:8000/users/1
+Content-Type: application/json
+
+{
+  "name": "新しい名前",
+  "password": "newpassword123"
+}
+

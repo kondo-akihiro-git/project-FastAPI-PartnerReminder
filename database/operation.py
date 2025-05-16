@@ -291,3 +291,31 @@ def user_exists(user_id: int) -> bool:
     result = cursor.fetchone()
     conn.close()
     return result is not None
+
+
+def update_user_info(user_id: int, name: str, hashed_password: str) -> bool:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # ユーザー存在チェック
+    cur.execute("SELECT id FROM Users WHERE id = %s", (user_id,))
+    if cur.fetchone() is None:
+        cur.close()
+        conn.close()
+        return False
+
+    try:
+        cur.execute("""
+            UPDATE Users
+            SET name = %s, password_hash = %s
+            WHERE id = %s
+        """, (name, hashed_password, user_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"ユーザー更新エラー: {e}")
+        conn.rollback()
+        return False
+    finally:
+        cur.close()
+        conn.close()
