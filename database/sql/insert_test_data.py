@@ -185,9 +185,6 @@ INSERT INTO Users (name, phone, email, password_hash) VALUES
 ('佐藤 一郎', '07055556666', 'ichiro@example.com', %s);
 """, (hashed_password, hashed_password, hashed_password))
 
-# NextEventDay
-cur.execute("INSERT INTO NextEventDay (date) VALUES ('2025-05-20');")
-
 # user_meetings 挿入（各ユーザーにMeetingを紐づける）
 cur.execute("""
 INSERT INTO user_meetings (user_id, meeting_id) VALUES
@@ -204,6 +201,14 @@ INSERT INTO user_meetings (user_id, meeting_id) VALUES
 (2, 11),
 (2, 12);
 """)
+
+cur.execute("""
+INSERT INTO NextEventDay (user_id, date) VALUES
+(1, '2025-05-20'),
+(2, '2025-06-01'),
+(3, '2025-06-15');
+""")
+
 
 # コミット & 終了
 conn.commit()

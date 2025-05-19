@@ -262,23 +262,41 @@ def get_user(user_id: int):
         raise HTTPException(status_code=404, detail="ユーザーが見つかりませんでした")
     return {"user": user}
 
+# @app.get("/next")
+# def read_next_event_day():
+#     next_day = get_next_event_day()
+#     if next_day is None:
+#         raise HTTPException(status_code=404, detail="次の予定が見つかりませんでした。")
+#     return next_day
+
 @app.get("/next")
-def read_next_event_day():
-    next_day = get_next_event_day()
+def read_next_event_day(user_id: int = Depends(get_current_user_id)):
+    next_day = get_next_event_day(user_id)
     if next_day is None:
         raise HTTPException(status_code=404, detail="次の予定が見つかりませんでした。")
     return next_day
-
 
 class NextEventUpdateRequest(BaseModel):
     date: str  # 形式: YYYY-MM-DD
 
 @app.put("/next")
-def update_next_event(req: NextEventUpdateRequest):
+def update_next_event(req: NextEventUpdateRequest, user_id: int = Depends(get_current_user_id)):
     try:
-        success = update_next_event_day(req.date)
+        success = update_next_event_day(req.date, user_id)
         if not success:
             raise HTTPException(status_code=500, detail="次回イベント日の更新に失敗しました。")
         return {"message": "次回イベント日を更新しました"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+# @app.put("/next")
+# def update_next_event(req: NextEventUpdateRequest):
+#     try:
+#         success = update_next_event_day(req.date)
+#         if not success:
+#             raise HTTPException(status_code=500, detail="次回イベント日の更新に失敗しました。")
+#         return {"message": "次回イベント日を更新しました"}
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
