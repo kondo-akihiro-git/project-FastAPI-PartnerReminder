@@ -188,6 +188,23 @@ INSERT INTO Users (name, phone, email, password_hash) VALUES
 # NextEventDay
 cur.execute("INSERT INTO NextEventDay (date) VALUES ('2025-05-20');")
 
+# user_meetings 挿入（各ユーザーにMeetingを紐づける）
+cur.execute("""
+INSERT INTO user_meetings (user_id, meeting_id) VALUES
+(1, 1),
+(1, 2),
+(1, 3),
+(1, 4),
+(1, 5),
+(2, 6),
+(2, 7),
+(2, 8),
+(2, 9),
+(2, 10),
+(2, 11),
+(2, 12);
+""")
+
 # コミット & 終了
 conn.commit()
 cur.close()
