@@ -2,7 +2,7 @@
 from typing import List
 from uuid import uuid4
 import bcrypt
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Header, UploadFile
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from api.models.meeting import Meeting
@@ -39,25 +39,60 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# @app.get("/meetings")
+# def read_meetings():
+#     rows = get_meetings()
+#     return {"meetings": rows}
+
+# ユーザー認証用デコレータ例（トークンからuser_id抽出）
+def get_current_user_id(access_token: str = Cookie(None)):
+    if access_token is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    payload = decode_jwt_token(access_token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return payload["user_id"]
 
 @app.get("/meetings")
-def read_meetings():
-    rows = get_meetings()
+def read_meetings(user_id: int = Depends(get_current_user_id)):
+    rows = get_meetings(user_id)
     return {"meetings": rows}
 
+from fastapi import Body
+
+@app.post("/meetings")
+def create_meeting(new_meeting: dict = Body(...), user_id: int = Depends(get_current_user_id)):
+    meeting_id = create_meeting_data(new_meeting, user_id)
+    if meeting_id is None:
+        raise HTTPException(status_code=500, detail="Meeting作成失敗")
+    return {"message": "登録に成功しました","meeting_id": meeting_id}
+
+# @app.get("/meetings/{meeting_id}")
+# def read_meeting_details(meeting_id: int):
+#     meeting = get_meeting_details(meeting_id)
+#     if meeting is None:
+#         raise HTTPException(status_code=404, detail="詳細データが見つかりませんでした。")
+#     return {"meeting": meeting}
+
 @app.get("/meetings/{meeting_id}")
-def read_meeting_details(meeting_id: int):
-    meeting = get_meeting_details(meeting_id)
+def read_meeting_details(meeting_id: int, user_id: int = Depends(get_current_user_id)):
+    meeting = get_meeting_details(meeting_id, user_id)
     if meeting is None:
         raise HTTPException(status_code=404, detail="詳細データが見つかりませんでした。")
     return {"meeting": meeting}
 
+# @app.put("/meetings/{meeting_id}")
+# def update_meeting(meeting_id: int, updated_data: dict = Body(...)):
+#     success = update_meeting_data(meeting_id, updated_data)
+#     if not success:
+#         raise HTTPException(status_code=404, detail="更新するデートが見つかりませんでした。")
+#     return {"message": "更新に成功しました"}
+
 @app.put("/meetings/{meeting_id}")
-def update_meeting(meeting_id: int, updated_data: dict = Body(...)):
-    
-    success = update_meeting_data(meeting_id, updated_data)
+def update_meeting(meeting_id: int, updated_data: dict = Body(...), user_id: int = Depends(get_current_user_id)):
+    success = update_meeting_data(meeting_id, updated_data, user_id)
     if not success:
-        raise HTTPException(status_code=404, detail="更新するデートが見つかりませんでした。")
+        raise HTTPException(status_code=404, detail="更新するデートが見つからないか、権限がありません。")
     return {"message": "更新に成功しました"}
 
 
@@ -76,26 +111,39 @@ def upload_image(file: UploadFile = File(...)):
 
     return {"filename": f"{UPLOAD_DIR}/{unique_filename}"}
 
-@app.post("/meetings")
-def create_meeting(new_data: dict = Body(...)):
-    new_id = create_meeting_data(new_data)
-    if new_id is None:
-        raise HTTPException(status_code=400, detail="デート情報の登録に失敗しました。")
-    return {"message": "登録に成功しました", "meeting_id": new_id}
+# @app.post("/meetings")
+# def create_meeting(new_data: dict = Body(...)):
+#     new_id = create_meeting_data(new_data)
+#     if new_id is None:
+#         raise HTTPException(status_code=400, detail="デート情報の登録に失敗しました。")
+#     return {"message": "登録に成功しました", "meeting_id": new_id}
 
 class DeleteRequest(BaseModel):
     ids: List[int]
 
+# @app.post("/meetings/delete")
+# def delete_meetings(request: DeleteRequest):
+#     deleted_count = delete_meetings_by_ids(request.ids)
+#     if deleted_count == 0:
+#         raise HTTPException(status_code=404, detail="削除対象のデートが見つかりませんでした。")
+#     return {"message": f"{deleted_count} 件のデート情報を削除しました。"}
+
 @app.post("/meetings/delete")
-def delete_meetings(request: DeleteRequest):
-    deleted_count = delete_meetings_by_ids(request.ids)
+def delete_meetings(request: DeleteRequest, user_id: int = Depends(get_current_user_id)):
+    deleted_count = delete_meetings_by_ids(request.ids, user_id)
     if deleted_count == 0:
-        raise HTTPException(status_code=404, detail="削除対象のデートが見つかりませんでした。")
+        raise HTTPException(status_code=404, detail="削除対象のデートが見つからないか、権限がありません。")
     return {"message": f"{deleted_count} 件のデート情報を削除しました。"}
 
+
+# @app.get("/goodpoints")
+# def read_good_points():
+#     rows = get_all_good_points()
+#     return {"goodpoints": rows}
+
 @app.get("/goodpoints")
-def read_good_points():
-    rows = get_all_good_points()
+def read_good_points(user_id: int = Depends(get_current_user_id)):
+    rows = get_all_good_points(user_id)
     return {"goodpoints": rows}
 
 class RegisterRequest(BaseModel):
@@ -214,23 +262,41 @@ def get_user(user_id: int):
         raise HTTPException(status_code=404, detail="ユーザーが見つかりませんでした")
     return {"user": user}
 
+# @app.get("/next")
+# def read_next_event_day():
+#     next_day = get_next_event_day()
+#     if next_day is None:
+#         raise HTTPException(status_code=404, detail="次の予定が見つかりませんでした。")
+#     return next_day
+
 @app.get("/next")
-def read_next_event_day():
-    next_day = get_next_event_day()
+def read_next_event_day(user_id: int = Depends(get_current_user_id)):
+    next_day = get_next_event_day(user_id)
     if next_day is None:
         raise HTTPException(status_code=404, detail="次の予定が見つかりませんでした。")
     return next_day
-
 
 class NextEventUpdateRequest(BaseModel):
     date: str  # 形式: YYYY-MM-DD
 
 @app.put("/next")
-def update_next_event(req: NextEventUpdateRequest):
+def update_next_event(req: NextEventUpdateRequest, user_id: int = Depends(get_current_user_id)):
     try:
-        success = update_next_event_day(req.date)
+        success = update_next_event_day(req.date, user_id)
         if not success:
             raise HTTPException(status_code=500, detail="次回イベント日の更新に失敗しました。")
         return {"message": "次回イベント日を更新しました"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+# @app.put("/next")
+# def update_next_event(req: NextEventUpdateRequest):
+#     try:
+#         success = update_next_event_day(req.date)
+#         if not success:
+#             raise HTTPException(status_code=500, detail="次回イベント日の更新に失敗しました。")
+#         return {"message": "次回イベント日を更新しました"}
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
