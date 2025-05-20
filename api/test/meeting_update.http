@@ -1,0 +1,37 @@
+-----------------------------------------------------
+テストケース：デート詳細の取得と更新
+-----------------------------------------------------
+### ログイン
+POST http://localhost:8000/login
+Content-Type: application/json
+
+{
+  "email": "a@a.com",
+  "password": "test"
+}
+
+### デート情報の取得
+GET http://localhost:8000/meetings HTTP/1.1
+Cookie: access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3NDc2NjU5NTF9.0trlHX3-4Kk9df7mJBI2CC_P-ONN6gYrgKmkjTaFYYo"
+
+### デート詳細の取得
+GET http://localhost:8000/meetings/1 HTTP/1.1
+Cookie: access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3NDc2NjU5NTF9.0trlHX3-4Kk9df7mJBI2CC_P-ONN6gYrgKmkjTaFYYo"
+
+### デート情報の更新（編集）
+PUT http://localhost:8000/meetings/1 HTTP/1.1
+Content-Type: application/json
+Cookie: access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3NDc2NjU5NTF9.0trlHX3-4Kk9df7mJBI2CC_P-ONN6gYrgKmkjTaFYYo"
+
+{
+  "title": "編集されたデート",
+  "location": "渋谷",
+  "date": "2025-03-08",
+  "my_appearance_image_path": "",
+  "meeting_photo": "date_photo10.jpg",
+  "event_names": "美術館\nカフェ",
+  "partner_appearances": "白ワンピース\nロングヘア",
+  "talked_topics": "映画の話\n趣味の話",
+  "partner_good_points": "笑顔が素敵\n丁寧な話し方",
+  "todo_for_next": "次のデート場所を探す\nLINEを送る"
+}

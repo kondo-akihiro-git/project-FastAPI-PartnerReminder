@@ -1,0 +1,38 @@
+-----------------------------------------------------
+テストケース：メール認証 → 新規登録 → ログイン
+-----------------------------------------------------
+
+### メール認証
+POST http://localhost:8000/send_verification_code
+Content-Type: application/json
+
+{
+  "email": "test@test.com"
+}
+
+### ユーザー登録(メール認証後)
+POST http://localhost:8000/register
+Content-Type: application/json
+
+{
+  "name": "横越秀",
+  "phone": "09012345678",
+  "email": "test@test.com",
+  "password": "password123",
+  "code":"726868"
+}
+
+### ログイン
+POST http://localhost:8000/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password123"
+}
+
+
+### 認証済みユーザー情報取得（Cookieを送る必要あり）
+GET http://localhost:8000/me
+Cookie: access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo0LCJleHAiOjE3NDc2NjY2NDF9.C00IVQAYZpiB9qRwzv_7JEjG5cYvinvIp1l9Y7BMcyk"
+

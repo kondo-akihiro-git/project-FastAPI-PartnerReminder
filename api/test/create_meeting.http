@@ -1,0 +1,34 @@
+#-----------------------------------------------------
+テストケース：ログイン → ミーティング一覧取得 → ミーティング作成
+#-----------------------------------------------------
+
+### ログインしてJWTトークン取得（メール・パスワードは適宜差し替え）
+POST http://localhost:8000/login
+Content-Type: application/json
+
+{
+  "email": "hanako@example.com",
+  "password": "test"
+}
+
+### ミーティング一覧取得（Bearer トークンは上で得たJWTに置き換える）
+GET http://localhost:8000/meetings
+Cookie: access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJleHAiOjE3NDc1ODQ4OTN9.rytx69kVHndXwA_3hqJb17X7Vk1SyVO_E_jGM63TJZs"
+
+### ミーティング作成
+POST http://localhost:8000/meetings
+Content-Type: application/json
+Cookie: access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJleHAiOjE3NDc1ODQ4OTN9.rytx69kVHndXwA_3hqJb17X7Vk1SyVO_E_jGM63TJZs"
+
+{
+  "title": "新規デート",
+  "location": "渋谷",
+  "date": "2025-06-01",
+  "event_names": "映画デート",
+  "partner_appearances": "カジュアル",
+  "talked_topics": "趣味",
+  "partner_good_points": "笑顔が素敵",
+  "todo_for_next": "次回はレストラン予約",
+  "my_appearance_image_path": "/images/myappearance1.jpg",
+  "meeting_photo": "/images/meetingphoto1.jpg"
+}
