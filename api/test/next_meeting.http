@@ -1,14 +1,14 @@
-#-----------------------------------------------------
+-----------------------------------------------------
 テストケース：ログイン → 次の予定情報の取得
-#-----------------------------------------------------
+-----------------------------------------------------
 
 ### ログイン成功
 POST http://localhost:8000/login
 Content-Type: application/json
 
 {
-  "email": "test@test.com",
-  "password": "password123"
+  "email": "a@a.com",
+  "password": "test"
 }
 
 ### 次の予定情報の取得
@@ -19,10 +19,10 @@ Cookie: access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJle
 ### 次の予定日の更新
 PUT http://localhost:8000/next
 Content-Type: application/json
-Cookie: access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3NDc2NjU5NTF9.0trlHX3-4Kk9df7mJBI2CC_P-ONN6gYrgKmkjTaFYYo"
+Cookie: access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3NDc3MjkwNTd9.bCPuRIvG7v_9mpwOStqzAyo9Fer1b59gXL3q9iQmbp4"
 
 {
-  "date": "2025-06-01"
+  "date": "2025-05-21"
 }
 
 ### 次の予定情報の取得
