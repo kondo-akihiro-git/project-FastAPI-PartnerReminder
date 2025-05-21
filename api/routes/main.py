@@ -167,8 +167,6 @@ class EmailRequest(BaseModel):
 
 # メモリ上に一時保存（本番ならRedisなど）
 email_verification_codes = {}
-
-
 @app.post("/send_verification_code")
 def send_verification_code(req: EmailRequest):
     code = str(random.randint(100000, 999999))
