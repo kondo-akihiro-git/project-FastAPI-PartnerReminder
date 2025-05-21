@@ -56,6 +56,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def root():
+    return {"message": "FastAPI app is running."}
 
 # ユーザー認証用デコレータ例（トークンからuser_id抽出）
 def get_current_user_id(access_token: str = Cookie(None)):
