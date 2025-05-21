@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 # .env を読み込む
 load_dotenv()
+print("DB_HOST:", os.getenv("DB_HOST")) 
 
 def get_connection():
     return psycopg2.connect(
