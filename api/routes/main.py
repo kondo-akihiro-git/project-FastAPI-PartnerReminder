@@ -1,4 +1,5 @@
 # api/main.py
+from email.utils import formataddr
 from typing import List
 from uuid import uuid4
 import bcrypt
@@ -13,6 +14,7 @@ from fastapi import (
     Cookie,
     Depends,
 )
+import requests
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -167,29 +169,67 @@ class EmailRequest(BaseModel):
 
 # メモリ上に一時保存（本番ならRedisなど）
 email_verification_codes = {}
+# @app.post("/send_verification_code")
+# def send_verification_code(req: EmailRequest):
+#     code = str(random.randint(100000, 999999))
+#     email_verification_codes[req.email] = code
+
+#     smtp_host = os.getenv("SMTP_HOST", "localhost")
+#     smtp_port = int(os.getenv("SMTP_PORT", 1025))
+#     email_from = os.getenv("EMAIL_FROM", "noreply@example.com")
+
+#     msg = MIMEText(f"あなたの認証コードは {code} です。")
+#     msg["Subject"] = "【認証コード】ユーザー登録確認"
+#     msg["From"] = email_from
+#     msg["To"] = req.email
+
+    # try:
+    #     with smtplib.SMTP(smtp_host, smtp_port) as server:
+    #         server.send_message(msg)
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail="メール送信に失敗しました")
+
+    # return {"message": "認証コードを送信しました"}
 @app.post("/send_verification_code")
 def send_verification_code(req: EmailRequest):
-    code = str(random.randint(100000, 999999))
-    email_verification_codes[req.email] = code
-
-    smtp_host = os.getenv("SMTP_HOST", "localhost")
-    smtp_port = int(os.getenv("SMTP_PORT", 1025))
-    email_from = os.getenv("EMAIL_FROM", "noreply@example.com")
-
-    msg = MIMEText(f"あなたの認証コードは {code} です。")
-    msg["Subject"] = "【認証コード】ユーザー登録確認"
-    msg["From"] = email_from
-    msg["To"] = req.email
-
-
-
     try:
-        with smtplib.SMTP(smtp_host, smtp_port) as server:
-            server.send_message(msg)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="メール送信に失敗しました")
+        print("🔵 Step 1: Generate code")
+        code = str(random.randint(100000, 999999))
+        email_verification_codes[req.email] = code
 
-    return {"message": "認証コードを送信しました"}
+        print("🔵 Step 2: Load environment variables")
+        smtp_host = os.getenv("SMTP_HOST")
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        smtp_user = os.getenv("SMTP_USER")
+        smtp_pass = os.getenv("SMTP_PASS")
+        email_from = os.getenv("EMAIL_FROM")
+
+        print(f"✅ smtp_host: {smtp_host}")
+        print(f"✅ smtp_port: {smtp_port}")
+        print(f"✅ smtp_user: {smtp_user}")
+        print(f"✅ email_from: {email_from}")
+        print(f"✅ to: {req.email}")
+
+        print("🔵 Step 3: Build email")
+        msg = MIMEText(f"あなたの認証コードは {code} です。")
+        msg["Subject"] = "【認証コード】ユーザー登録確認"
+        msg["From"] = formataddr(("PartnerReminder", email_from))
+        msg["To"] = req.email
+
+        print("🔵 Step 4: Send email")
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+
+        print("✅ Email sent successfully")
+        return {"message": "認証コードを送信しました"}
+
+    except Exception as e:
+        print(f"🔥 Error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"内部エラー: {str(e)}")
+
+
 
 
 @app.post("/register")
