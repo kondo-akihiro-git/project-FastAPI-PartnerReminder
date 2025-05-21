@@ -37,15 +37,18 @@ from database.operation.user.update_next_event_day import update_next_event_day
 from database.operation.user.update_user_info import update_user_info
 from database.operation.user.user_exists import user_exists
 
+from dotenv import load_dotenv
+load_dotenv()
+
+import os
+
 
 app = FastAPI()
 
+origins = os.getenv("FRONTEND_ORIGINS", "").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:8000",
-    ],  
+    allow_origins=origins,  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -106,7 +109,7 @@ def update_meeting(
 
 
 app.mount("/files", StaticFiles(directory="files"), name="files")
-UPLOAD_DIR = "files/uploaded_images"
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "files/uploaded_images")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
@@ -164,20 +167,24 @@ class EmailRequest(BaseModel):
 
 # メモリ上に一時保存（本番ならRedisなど）
 email_verification_codes = {}
-
-
 @app.post("/send_verification_code")
 def send_verification_code(req: EmailRequest):
     code = str(random.randint(100000, 999999))
     email_verification_codes[req.email] = code
 
+    smtp_host = os.getenv("SMTP_HOST", "localhost")
+    smtp_port = int(os.getenv("SMTP_PORT", 1025))
+    email_from = os.getenv("EMAIL_FROM", "noreply@example.com")
+
     msg = MIMEText(f"あなたの認証コードは {code} です。")
     msg["Subject"] = "【認証コード】ユーザー登録確認"
-    msg["From"] = "noreply@example.com"
+    msg["From"] = email_from
     msg["To"] = req.email
 
+
+
     try:
-        with smtplib.SMTP("localhost", 1025) as server:
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
             server.send_message(msg)
     except Exception as e:
         raise HTTPException(status_code=500, detail="メール送信に失敗しました")
@@ -203,6 +210,7 @@ def login(req: LoginRequest, response: Response):
         raise HTTPException(
             status_code=401, detail="メールアドレスかパスワードが違います。"
         )
+    secure_cookie = os.getenv("COOKIE_SECURE", "false").lower() == "true"
 
     token = create_jwt_token(user_id)
     response.set_cookie(
@@ -212,7 +220,7 @@ def login(req: LoginRequest, response: Response):
         max_age=3600,
         samesite="lax",
         path="/",
-        secure=False,
+        secure=secure_cookie,
     )
     return {"message": "ログイン成功", "user_id": user_id, "response": response}
 
