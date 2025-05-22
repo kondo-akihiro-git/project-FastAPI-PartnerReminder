@@ -304,20 +304,49 @@ def logout(response: Response):
     return {"message": "ログアウトしました"}
 
 
+# def get_current_user(access_token: str = Cookie(None)):
+#     if access_token is None:
+#         raise HTTPException(status_code=401, detail="未認証です")
+#     payload = decode_jwt_token(access_token)
+#     if payload is None:
+#         raise HTTPException(status_code=401, detail="トークンが無効か期限切れです")
+#     user = get_user_by_id(payload["user_id"])
+#     if user is None:
+#         raise HTTPException(status_code=401, detail="ユーザーが存在しません")
+#     return user
+
+
 def get_current_user(access_token: str = Cookie(None)):
+    logging.info(f"get_current_user 呼び出し開始")
+    logging.info(f"Cookie access_token: {access_token}")
+
     if access_token is None:
+        logging.warning("未認証: Cookie access_token が存在しません")
         raise HTTPException(status_code=401, detail="未認証です")
+
     payload = decode_jwt_token(access_token)
+    logging.info(f"JWTデコード結果: {payload}")
+
     if payload is None:
+        logging.warning("無効なトークン: デコードに失敗または期限切れ")
         raise HTTPException(status_code=401, detail="トークンが無効か期限切れです")
+
     user = get_user_by_id(payload["user_id"])
     if user is None:
+        logging.warning(f"ユーザーが見つかりません: user_id={payload['user_id']}")
         raise HTTPException(status_code=401, detail="ユーザーが存在しません")
+
+    logging.info(f"ユーザー取得成功: {user}")
     return user
 
 
+# @app.get("/me")
+# def read_current_user(user=Depends(get_current_user)):
+#     return {"user": user}
+
 @app.get("/me")
 def read_current_user(user=Depends(get_current_user)):
+    logging.info(f"/me エンドポイント呼び出し: user={user}")
     return {"user": user}
 
 
