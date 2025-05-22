@@ -41,6 +41,8 @@ from database.operation.user.user_exists import user_exists
 from dotenv import load_dotenv
 import os
 import logging
+import cloudinary
+from cloudinary.uploader import upload as cloudinary_upload
 
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
@@ -117,17 +119,42 @@ UPLOAD_DIR = os.getenv("UPLOAD_DIR", "files/uploaded_images")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
+# @app.post("/upload-image")
+# def upload_image(file: UploadFile = File(...)):
+#     ext = os.path.splitext(file.filename)[1]
+#     unique_filename = f"{uuid4().hex}{ext}"
+#     file_path = os.path.join(UPLOAD_DIR, unique_filename)
+
+#     with open(file_path, "wb") as buffer:
+#         shutil.copyfileobj(file.file, buffer)
+
+#     return {"filename": f"{UPLOAD_DIR}/{unique_filename}"}
+
+
+
+cloudinary.config(
+    cloud_name=os.getenv("CLOUD_NAME"),
+    api_key=os.getenv("CLOUD_API_KEY"),
+    api_secret=os.getenv("CLOUD_SECRET"),
+    secure=True
+)
+
 @app.post("/upload-image")
 def upload_image(file: UploadFile = File(...)):
-    ext = os.path.splitext(file.filename)[1]
-    unique_filename = f"{uuid4().hex}{ext}"
-    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+    try:
+        # Cloudinaryにアップロード
+        result = cloudinary_upload(file.file, public_id=f"meeting_{uuid4().hex}", folder="meetings")
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        # 結果に含まれる画像URLを返す
+        return {
+            "url": result["secure_url"],
+            "public_id": result["public_id"]
+        }
 
-    return {"filename": f"{UPLOAD_DIR}/{unique_filename}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"画像アップロード失敗: {str(e)}")
 
+        
 
 class DeleteRequest(BaseModel):
     ids: List[int]
@@ -243,7 +270,7 @@ def login(req: LoginRequest, response: Response):
         value=token,
         httponly=True,
         max_age=3600,
-        samesite="none",
+        samesite=os.getenv("COOKIE_LAX"),
         path="/",
         secure=secure_cookie,
     )
