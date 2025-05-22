@@ -38,12 +38,12 @@ from database.operation.user.get_user_by_id import get_user_by_id
 from database.operation.user.update_next_event_day import update_next_event_day
 from database.operation.user.update_user_info import update_user_info
 from database.operation.user.user_exists import user_exists
-
 from dotenv import load_dotenv
-load_dotenv()
-
 import os
+import logging
 
+logging.basicConfig(level=logging.INFO)
+load_dotenv()
 
 app = FastAPI()
 
@@ -246,16 +246,44 @@ def register_user(data: RegisterRequest):
         raise HTTPException(status_code=400, detail="登録に失敗しました")
 
 
+# @app.post("/login")
+# def login(req: LoginRequest, response: Response):
+#     user_id = authenticate_user(req.email, req.password)
+#     if user_id is None:
+#         raise HTTPException(
+#             status_code=401, detail="メールアドレスかパスワードが違います。"
+#         )
+#     secure_cookie = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+
+#     token = create_jwt_token(user_id)
+#     response.set_cookie(
+#         key="access_token",
+#         value=token,
+#         httponly=True,
+#         max_age=3600,
+#         samesite="lax",
+#         path="/",
+#         secure=secure_cookie,
+#     )
+#     return {"message": "ログイン成功", "user_id": user_id, "response": response}
+
 @app.post("/login")
 def login(req: LoginRequest, response: Response):
+    logging.info(f"ログイン試行: email={req.email}, password={req.password}")
     user_id = authenticate_user(req.email, req.password)
+
     if user_id is None:
+        logging.warning("ログイン失敗: メールアドレスかパスワードが一致しません")
         raise HTTPException(
             status_code=401, detail="メールアドレスかパスワードが違います。"
         )
+
     secure_cookie = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+    logging.info(f"ユーザー認証成功: user_id={user_id}, secure_cookie={secure_cookie}")
 
     token = create_jwt_token(user_id)
+    logging.info(f"JWTトークン生成: {token}")
+
     response.set_cookie(
         key="access_token",
         value=token,
@@ -265,7 +293,9 @@ def login(req: LoginRequest, response: Response):
         path="/",
         secure=secure_cookie,
     )
-    return {"message": "ログイン成功", "user_id": user_id, "response": response}
+    logging.info("Cookie設定完了")
+
+    return {"message": "ログイン成功", "user_id": user_id, "token": token}
 
 
 @app.post("/logout")
