@@ -60,7 +60,6 @@ app.add_middleware(
 def root():
     return {"message": "FastAPI app is running."}
 
-# ユーザー認証用デコレータ例（トークンからuser_id抽出）
 def get_current_user_id(access_token: str = Cookie(None)):
     if access_token is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -169,30 +168,7 @@ class LoginRequest(BaseModel):
 class EmailRequest(BaseModel):
     email: str
 
-
-# メモリ上に一時保存（本番ならRedisなど）
 email_verification_codes = {}
-# @app.post("/send_verification_code")
-# def send_verification_code(req: EmailRequest):
-#     code = str(random.randint(100000, 999999))
-#     email_verification_codes[req.email] = code
-
-#     smtp_host = os.getenv("SMTP_HOST", "localhost")
-#     smtp_port = int(os.getenv("SMTP_PORT", 1025))
-#     email_from = os.getenv("EMAIL_FROM", "noreply@example.com")
-
-#     msg = MIMEText(f"あなたの認証コードは {code} です。")
-#     msg["Subject"] = "【認証コード】ユーザー登録確認"
-#     msg["From"] = email_from
-#     msg["To"] = req.email
-
-    # try:
-    #     with smtplib.SMTP(smtp_host, smtp_port) as server:
-    #         server.send_message(msg)
-    # except Exception as e:
-    #     raise HTTPException(status_code=500, detail="メール送信に失敗しました")
-
-    # return {"message": "認証コードを送信しました"}
 @app.post("/send_verification_code")
 def send_verification_code(req: EmailRequest):
     try:
@@ -245,28 +221,6 @@ def register_user(data: RegisterRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail="登録に失敗しました")
 
-
-# @app.post("/login")
-# def login(req: LoginRequest, response: Response):
-#     user_id = authenticate_user(req.email, req.password)
-#     if user_id is None:
-#         raise HTTPException(
-#             status_code=401, detail="メールアドレスかパスワードが違います。"
-#         )
-#     secure_cookie = os.getenv("COOKIE_SECURE", "false").lower() == "true"
-
-#     token = create_jwt_token(user_id)
-#     response.set_cookie(
-#         key="access_token",
-#         value=token,
-#         httponly=True,
-#         max_age=3600,
-#         samesite="lax",
-#         path="/",
-#         secure=secure_cookie,
-#     )
-#     return {"message": "ログイン成功", "user_id": user_id, "response": response}
-
 @app.post("/login")
 def login(req: LoginRequest, response: Response):
     logging.info(f"ログイン試行: email={req.email}, password={req.password}")
@@ -304,18 +258,6 @@ def logout(response: Response):
     return {"message": "ログアウトしました"}
 
 
-# def get_current_user(access_token: str = Cookie(None)):
-#     if access_token is None:
-#         raise HTTPException(status_code=401, detail="未認証です")
-#     payload = decode_jwt_token(access_token)
-#     if payload is None:
-#         raise HTTPException(status_code=401, detail="トークンが無効か期限切れです")
-#     user = get_user_by_id(payload["user_id"])
-#     if user is None:
-#         raise HTTPException(status_code=401, detail="ユーザーが存在しません")
-#     return user
-
-
 def get_current_user(access_token: str = Cookie(None)):
     logging.info(f"get_current_user 呼び出し開始")
     logging.info(f"Cookie access_token: {access_token}")
@@ -338,11 +280,6 @@ def get_current_user(access_token: str = Cookie(None)):
 
     logging.info(f"ユーザー取得成功: {user}")
     return user
-
-
-# @app.get("/me")
-# def read_current_user(user=Depends(get_current_user)):
-#     return {"user": user}
 
 @app.get("/me")
 def read_current_user(user=Depends(get_current_user)):
