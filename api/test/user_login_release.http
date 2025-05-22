@@ -1,0 +1,33 @@
+-----------------------------------------------------
+テストケース：ログイン → 認証済みユーザー情報の取得 → 更新
+-----------------------------------------------------
+
+### ログイン成功
+POST https://project-fastapi-partnerreminder.onrender.com/login
+Content-Type: application/json
+
+{
+  "email": "3149akihiro@gmail.com",
+  "password": "test"
+}
+
+### 認証済みユーザー情報取得（Cookieを送る必要あり）
+GET https://project-fastapi-partnerreminder.onrender.com/me
+Cookie: access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJleHAiOjE3NDc5MDcxNTN9.Jgv9cD_wJuiJsFIh0-lwJxlCht_lOEUiFzgoR3_s4wI"
+
+### ユーザー情報の更新（ユーザー名とパスワード）
+PUT http://localhost:8000/users/1
+Content-Type: application/json
+Cookie: access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3NDc2NjEwOTZ9.tfJmkMVl4mWYOFVqGQg_O0HqvIPDPoFf-2oG1d_NisM"
+
+{
+  "name": "新しい名前",
+  "phone": "09012345678",
+  "password": "test"
+}
+
+### 認証済みユーザー情報取得（Cookieを送る必要あり）
+GET http://localhost:8000/me
+Cookie: access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3NDc2NjEwOTZ9.tfJmkMVl4mWYOFVqGQg_O0HqvIPDPoFf-2oG1d_NisM"
+
+

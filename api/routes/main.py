@@ -289,7 +289,7 @@ def login(req: LoginRequest, response: Response):
         value=token,
         httponly=True,
         max_age=3600,
-        samesite="lax",
+        samesite="none",
         path="/",
         secure=secure_cookie,
     )
