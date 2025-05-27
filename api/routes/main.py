@@ -7,6 +7,7 @@ from fastapi import (
     FastAPI,
     File,
     HTTPException,
+    Header,
     UploadFile,
     Body,
     Path,
@@ -62,12 +63,21 @@ app.add_middleware(
 def root():
     return {"message": "FastAPI app is running."}
 
-def get_current_user_id(access_token: str = Cookie(None)):
-    if access_token is None:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    payload = decode_jwt_token(access_token)
+# def get_current_user_id(access_token: str = Cookie(None)):
+#     if access_token is None:
+#         raise HTTPException(status_code=401, detail="Not authenticated")
+#     payload = decode_jwt_token(access_token)
+#     if not payload:
+#         raise HTTPException(status_code=401, detail="Invalid or expired token")
+#     return payload["user_id"]
+
+def get_current_user_id(authorization: str = Header(None)):
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="認証情報がありません")
+    token = authorization.removeprefix("Bearer ").strip()
+    payload = decode_jwt_token(token)
     if not payload:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+        raise HTTPException(status_code=401, detail="無効または期限切れのトークンです")
     return payload["user_id"]
 
 
@@ -248,49 +258,68 @@ def register_user(data: RegisterRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail="登録に失敗しました")
 
+# @app.post("/login")
+# def login(req: LoginRequest, response: Response):
+#     logging.info(f"ログイン試行: email={req.email}, password={req.password}")
+#     user_id = authenticate_user(req.email, req.password)
+
+#     if user_id is None:
+#         logging.warning("ログイン失敗: メールアドレスかパスワードが一致しません")
+#         raise HTTPException(
+#             status_code=401, detail="メールアドレスかパスワードが違います。"
+#         )
+
+#     secure_cookie = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+#     logging.info(f"ユーザー認証成功: user_id={user_id}, secure_cookie={secure_cookie}")
+
+#     token = create_jwt_token(user_id)
+#     logging.info(f"JWTトークン生成: {token}")
+
+#     response.set_cookie(
+#         key="access_token",
+#         value=token,
+#         httponly=True,
+#         max_age=3600,
+#         samesite=os.getenv("COOKIE_LAX"),
+#         path="/",
+#         secure=secure_cookie,
+#     )
+#     logging.info("Cookie設定完了")
+
+#     return {"message": "ログイン成功", "user_id": user_id, "token": token}
+
+
 @app.post("/login")
-def login(req: LoginRequest, response: Response):
-    logging.info(f"ログイン試行: email={req.email}, password={req.password}")
+def login(req: LoginRequest):
     user_id = authenticate_user(req.email, req.password)
-
     if user_id is None:
-        logging.warning("ログイン失敗: メールアドレスかパスワードが一致しません")
-        raise HTTPException(
-            status_code=401, detail="メールアドレスかパスワードが違います。"
-        )
-
-    secure_cookie = os.getenv("COOKIE_SECURE", "false").lower() == "true"
-    logging.info(f"ユーザー認証成功: user_id={user_id}, secure_cookie={secure_cookie}")
+        raise HTTPException(status_code=401, detail="メールアドレスかパスワードが違います。")
 
     token = create_jwt_token(user_id)
-    logging.info(f"JWTトークン生成: {token}")
-
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        max_age=3600,
-        samesite=os.getenv("COOKIE_LAX"),
-        path="/",
-        secure=secure_cookie,
-    )
-    logging.info("Cookie設定完了")
-
     return {"message": "ログイン成功", "user_id": user_id, "token": token}
 
 
+# @app.post("/logout")
+# def logout(response: Response):
+#     response.delete_cookie("access_token", path="/")
+#     return {"message": "ログアウトしました"}
+
 @app.post("/logout")
 def logout(response: Response):
-    response.delete_cookie("access_token", path="/")
     return {"message": "ログアウトしました"}
 
 
-def get_current_user(access_token: str = Cookie(None)):
+def get_current_user(authorization: str = Header(None)):
+
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="認証情報がありません")
+    access_token = authorization.removeprefix("Bearer ").strip()
+
     logging.info(f"get_current_user 呼び出し開始")
-    logging.info(f"Cookie access_token: {access_token}")
+    logging.info(f"JWT access_token: {access_token}")
 
     if access_token is None:
-        logging.warning("未認証: Cookie access_token が存在しません")
+        logging.warning("未認証: JWT access_token が存在しません")
         raise HTTPException(status_code=401, detail="未認証です")
 
     payload = decode_jwt_token(access_token)
